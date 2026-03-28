@@ -1,4 +1,4 @@
-Vision-Mart AI: Smart Product Recognition & Inventory System
+
 <div align="center">
 <img src="https://cdn-icons-png.flaticon.com/512/3081/3081648.png" width="120">
 <h1>Vision-Mart AI</h1>
@@ -16,6 +16,8 @@ Vision-Mart AI: Smart Product Recognition & Inventory System
 <img src="https://img.shields.io/badge/Status-Development%20Phase-blue?style=for-the-badge&logo=github" alt="Status">
 </a>
 </div>
+
+Vision-Mart AI: Smart Product Recognition & Inventory System
 
 Executive Summary
 Vision-Mart AI ek cutting-edge computer vision solution hai jo retail products ko foran pehchanta hai aur unki prices database se fetch karta hai. Ye system khas tor par Mobile users ke liye design kiya gaya hai taake shop owners camera scan ke zariye inventory aur billing manage kar sakein.
