@@ -1,6 +1,7 @@
 import streamlit as st
 import numpy as np
 from PIL import Image, ImageOps
+from io import BytesIO
 import tensorflow as tf
 from database import init_db, get_price, add_scan, get_history, clear_history, get_stats
 from ui import apply_custom_ui
@@ -23,7 +24,14 @@ def load_resources():
     try:
         model = tf.keras.models.load_model("keras_model.h5", compile=False)
         with open("labels.txt", "r") as f:
-            labels = f.readlines()
+            # ✅ FIX: Correct parse — "0 Surf Excel" → "Surf Excel" (10+ classes ke liye bhi kaam karta hai)
+            labels = []
+            for line in f:
+                line = line.strip()
+                if line:
+                    parts = line.split(" ", 1)
+                    if len(parts) == 2:
+                        labels.append(parts[1].strip())
         return model, labels
     except Exception as e:
         return None, None
@@ -90,8 +98,10 @@ with col1:
             label_visibility="collapsed"
         )
         if uploaded_img:
-            st.image(uploaded_img, use_container_width=True)
-            img_file = uploaded_img
+            # ✅ FIX: bytes ek baar read karo — display aur model dono ke liye
+            img_bytes = uploaded_img.read()
+            st.image(img_bytes, use_container_width=True)
+            img_file = BytesIO(img_bytes)
 
     st.markdown('</div>', unsafe_allow_html=True)
 
@@ -114,16 +124,15 @@ with col2:
         with st.spinner("Analyzing..."):
             prediction = model.predict(data)
             index = np.argmax(prediction)
-            product_name = class_names[index][2:].strip()
+            # ✅ FIX: class_names already correctly parsed — direct use karein
+            product_name = class_names[index]
             confidence_score = float(prediction[0][index])
 
         if confidence_score > 0.7:
-            # Price from database
             price = get_price(product_name)
             price_display = f"Rs. {int(price)}" if price is not None else "Price set nahi hai"
             price_val = price if price is not None else 0
 
-            # Save to DB
             add_scan(product_name, price_val, round(confidence_score * 100))
 
             st.markdown(f"""
@@ -138,7 +147,6 @@ with col2:
             if price is None:
                 st.markdown('<div class="warn-box">Is product ki price set nahi hai. Admin Panel mein jaa kar price set karein.</div>', unsafe_allow_html=True)
 
-            # Probability bars
             st.markdown('<div class="prob-title">All Predictions</div>', unsafe_allow_html=True)
             for i, label in enumerate(class_names):
                 prob = float(prediction[0][i])
@@ -146,7 +154,7 @@ with col2:
                 is_top = "top" if i == index else ""
                 st.markdown(f"""
                 <div class="prob-row">
-                    <div class="prob-label">{label[2:].strip()}</div>
+                    <div class="prob-label">{label}</div>
                     <div class="prob-bar-bg">
                         <div class="prob-bar-fill {is_top}" style="width:{pct}%"></div>
                     </div>
